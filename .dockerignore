@@ -1,0 +1,10 @@
+/appveyor.yml
+/build/
+/ChangeLog.txt
+/ci/
+/CONTRIBUTING.md
+/.drone.yml
+/.git/
+/.github/
+/.gitignore
+/.gitlab-ci.yml
