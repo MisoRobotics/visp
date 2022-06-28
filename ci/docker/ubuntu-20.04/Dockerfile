@@ -1,14 +1,11 @@
+#! syntax=docker/dockerfile:1
 FROM ubuntu:20.04
-MAINTAINER Fabien Spindler <Fabien.Spindler@inria.fr>
-
+LABEL maintainer="Fabien Spindler <Fabien.Spindler@inria.fr>"
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris
 
-# Update aptitude with new repo
-RUN apt-get update 
-    
-# Install packages
-RUN apt-get install -y \
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get install -y \
     build-essential \
     cmake \
     git \
@@ -29,25 +26,18 @@ RUN apt-get install -y \
     libogre-1.9-dev \
     libois-dev \
     libdmtx-dev \
-    libgsl-dev
+    libgsl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install visp-images
-RUN mkdir -p ${HOME}/visp-ws \
-    && cd ${HOME}/visp-ws \
-    && git clone https://github.com/lagadic/visp-images.git \
-    && echo "export VISP_WS=${HOME}/visp-ws" >> ${HOME}/.bashrc \
-    && echo "export VISP_INPUT_IMAGE_PATH=${HOME}/visp-ws/visp-images" >> ${HOME}/.bashrc
+ENV VISP_WS=/visp-ws VISP_INPUT_IMAGE_PATH=/visp-ws/visp-images
+RUN mkdir -p ${VISP_WS} && git clone https://github.com/lagadic/visp-images.git ${VISP_INPUT_IMAGE_PATH}
+WORKDIR ${VISP_WS}
 
-# Get visp
-RUN cd ${HOME}/visp-ws \
-    && git clone https://github.com/lagadic/visp
-
-# Build visp
-RUN cd ${HOME}/visp-ws \
-    && mkdir visp-build \
-    && cd visp-build \
-    && cmake ../visp \
-    && make
+RUN git clone https://github.com/lagadic/visp && rm -rf .git \
+    && mkdir build \
+    && cmake -B build ../visp \
+    && make -C build "-j$(nproc)" \
+    && make -C build install \
+    && rm -rf build
 
 WORKDIR /
-
